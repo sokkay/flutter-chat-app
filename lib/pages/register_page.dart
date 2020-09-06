@@ -75,4 +75,12 @@ class _FormState extends State<_Form> {
       ),
     );
   }
+
+  @override
+  void dispose() { 
+    nameCtrl.dispose();
+    emailCtrl.dispose();
+    passwordCtrl.dispose();
+    super.dispose();
+  }
 }
