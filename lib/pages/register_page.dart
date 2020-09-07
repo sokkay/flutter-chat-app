@@ -1,8 +1,11 @@
+import 'package:chat/helpers/error_dialog.dart';
+import 'package:chat/services/auth_service.dart';
 import 'package:chat/widgets/button_blue.dart';
 import 'package:chat/widgets/custom_input.dart';
 import 'package:chat/widgets/login/labels.dart';
 import 'package:chat/widgets/login/logo.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class RegisterPage extends StatelessWidget {
   @override
@@ -45,6 +48,8 @@ class _FormState extends State<_Form> {
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context);
+
     return Container(
       margin: EdgeInsets.only(top: 40),
       padding: EdgeInsets.symmetric(horizontal: 50),
@@ -68,7 +73,9 @@ class _FormState extends State<_Form> {
             textController: passwordCtrl,
           ),
           ButtonBlue(
-            onPressed: () {},
+            onPressed: authService.autenticando
+                ? null
+                : () => _handleRegister(authService),
             text: 'Ingrese',
           ),
         ],
@@ -77,10 +84,24 @@ class _FormState extends State<_Form> {
   }
 
   @override
-  void dispose() { 
+  void dispose() {
     nameCtrl.dispose();
     emailCtrl.dispose();
     passwordCtrl.dispose();
     super.dispose();
+  }
+
+  void _handleRegister(AuthService authService) async {
+    FocusScope.of(context).unfocus();
+    final error = await authService.register(
+      nameCtrl.text.trim(),
+      emailCtrl.text.trim(),
+      passwordCtrl.text.trim(),
+    );
+    if (error != null) {
+      showErrorDialog(context, "Ha ocurrido un error", error);
+    } else {
+      Navigator.pushReplacementNamed(context, 'usuarios');
+    }
   }
 }
