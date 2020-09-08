@@ -104,6 +104,7 @@ class AuthService with ChangeNotifier {
       }
     } catch (e) {
       print(e);
+      return false;
     }
   }
 

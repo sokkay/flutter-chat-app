@@ -1,5 +1,6 @@
 import 'package:chat/helpers/error_dialog.dart';
 import 'package:chat/services/auth_service.dart';
+import 'package:chat/services/socket_service.dart';
 import 'package:chat/widgets/button_blue.dart';
 import 'package:chat/widgets/custom_input.dart';
 import 'package:chat/widgets/login/labels.dart';
@@ -94,6 +95,7 @@ class _FormState extends State<_Form> {
     if (error != null) {
       showErrorDialog(context, "Ha ocurrido un error", error);
     } else {
+      Provider.of<SocketService>(context, listen: false).connect();
       Navigator.pushReplacementNamed(context, 'usuarios');
     }
   }
