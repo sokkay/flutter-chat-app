@@ -1,9 +1,9 @@
-import 'package:chat/services/auth_service.dart';
-import 'package:chat/services/chat_service.dart';
-import 'package:chat/services/socket_service.dart';
+import 'package:chat/blocs/auth/authentication_bloc.dart';
+import 'package:chat/blocs/chat/chat_bloc.dart';
+import 'package:chat/blocs/socket/socket_bloc.dart';
 import 'package:chat/widgets/chat_message.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ChatPage extends StatefulWidget {
   @override
@@ -15,68 +15,78 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
   final _focusNode = new FocusNode();
   bool isWritting = false;
 
-  List<ChatMessage> _messages = [];
-
-  ChatService chatService;
-  SocketService socketService;
-  AuthService authService;
+  List<ChatMessage> _messagesWidget = [];
 
   @override
   void initState() {
     super.initState();
-    this.chatService = Provider.of<ChatService>(context, listen: false);
-    this.socketService = Provider.of<SocketService>(context, listen: false);
-    this.authService = Provider.of<AuthService>(context, listen: false);
-
-    // this.socketService.socket.on('mensaje-personal', _listenMessage);
-    _loadHistory(this.chatService.usuarioTo.uid);
+    context
+        .bloc<SocketBloc>()
+        .state
+        .socket
+        .on('mensaje-personal', _listenMessage);
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = chatService.usuarioTo;
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 1,
-        centerTitle: true,
-        title: Column(
-          children: [
-            CircleAvatar(
-              child: Text(
-                user.name.substring(0, 2),
-                style: TextStyle(fontSize: 12),
-              ),
-              backgroundColor: Colors.blue[100],
-              maxRadius: 14,
+    return BlocConsumer<ChatBloc, ChatState>(
+      listener: (context, state) {
+        if (state.chatStatus == ChatStatus.complete) {
+          final history = state.messages.map(
+            (e) => new ChatMessage(
+              texto: e.message,
+              uid: e.from,
+              myUid: context.bloc<AuthenticationBloc>().state.user.uid,
             ),
-            SizedBox(height: 3),
-            Text(
-              user.name,
-              style: TextStyle(color: Colors.black87, fontSize: 12),
-            )
-          ],
-        ),
-      ),
-      body: Container(
-        child: Column(
-          children: [
-            Flexible(
-              child: ListView.builder(
-                physics: BouncingScrollPhysics(),
-                itemBuilder: (_, i) => _messages[i],
-                itemCount: _messages.length,
-                reverse: true,
-              ),
+          );
+          _messagesWidget.insertAll(0, history);
+        }
+      },
+      builder: (context, state) {
+        return Scaffold(
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 1,
+            centerTitle: true,
+            title: Column(
+              children: [
+                CircleAvatar(
+                  child: Text(
+                    state.userTo.name.substring(0, 2),
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  backgroundColor: Colors.blue[100],
+                  maxRadius: 14,
+                ),
+                SizedBox(height: 3),
+                Text(
+                  state.userTo.name,
+                  style: TextStyle(color: Colors.black87, fontSize: 12),
+                )
+              ],
             ),
-            Divider(height: 1),
-            Container(
-              color: Colors.white,
-              child: _inputChat(),
-            )
-          ],
-        ),
-      ),
+          ),
+          body: Container(
+            child: Column(
+              children: [
+                Flexible(
+                  child: ListView.builder(
+                    physics: BouncingScrollPhysics(),
+                    itemBuilder: (_, i) => _messagesWidget[i],
+                    itemCount: _messagesWidget.length,
+                    reverse: true,
+                  ),
+                ),
+                Divider(height: 1),
+                Container(
+                  color: Colors.white,
+                  child: _inputChat(),
+                )
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -84,8 +94,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
   void dispose() {
     _textCtrl.dispose();
     _focusNode.dispose();
-    _messages.forEach((m) => m.animationController?.dispose());
-    // this.socketService.socket.off('mensaje-personal');
+    _messagesWidget.forEach((m) => m.animationController?.dispose());
     super.dispose();
   }
 
@@ -132,11 +141,16 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     _focusNode.requestFocus();
     if (text.trim().length == 0) return;
 
-    _messages.insert(
+    final chatBloc = context.bloc<ChatBloc>().state;
+    final authBloc = context.bloc<AuthenticationBloc>().state;
+    final socketBloc = context.bloc<SocketBloc>().state;
+
+    _messagesWidget.insert(
       0,
       new ChatMessage(
-        uid: authService.usuario.uid,
+        uid: authBloc.user.uid,
         texto: text,
+        myUid: authBloc.user.uid,
         animationController: AnimationController(
           vsync: this,
           duration: Duration(milliseconds: 250),
@@ -147,9 +161,9 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     _textCtrl.clear();
     setState(() => isWritting = false);
 
-    this.socketService.emit('mensaje-personal', {
-      'from': authService.usuario.uid,
-      'to': chatService.usuarioTo.uid,
+    socketBloc.socket.emit('mensaje-personal', {
+      'from': authBloc.user.uid,
+      'to': chatBloc.userTo.uid,
       'message': text
     });
   }
@@ -158,27 +172,15 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     final message = ChatMessage(
       texto: data['message'],
       uid: data['from'],
+      myUid: context.bloc<AuthenticationBloc>().state.user.uid,
       animationController: new AnimationController(
         vsync: this,
         duration: Duration(milliseconds: 250),
       ),
     );
-    this._messages.insert(0, message);
+    this._messagesWidget.insert(0, message);
     setState(() {});
 
     message.animationController.forward();
-  }
-
-  void _loadHistory(String uid) async {
-    final chat = await this.chatService.getChat(uid);
-    final history = chat.map(
-      (e) => new ChatMessage(
-        texto: e.message,
-        uid: e.from,
-      ),
-    );
-    setState(() {
-      _messages.insertAll(0, history);
-    });
   }
 }

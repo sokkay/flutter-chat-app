@@ -1,3 +1,4 @@
+import 'package:chat/blocs/chat/chat_bloc.dart';
 import 'package:chat/blocs/login/login_bloc.dart';
 import 'package:chat/blocs/socket/socket_bloc.dart';
 import 'package:flutter_bloc/src/bloc_provider.dart';
@@ -13,5 +14,6 @@ List<BlocProviderSingleChildWidget> providers() {
     ),
     BlocProvider(create: (context) => LoginBloc()),
     BlocProvider(create: (context) => SocketBloc()),
+    BlocProvider(create: (context) => ChatBloc()),
   ];
 }

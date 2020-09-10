@@ -1,7 +1,8 @@
 import 'package:chat/blocs/auth/authentication_bloc.dart';
+import 'package:chat/blocs/chat/chat_bloc.dart';
 import 'package:chat/blocs/socket/socket_bloc.dart';
 import 'package:chat/models/usuario.dart';
-import 'package:chat/services/chat_service.dart';
+import 'package:chat/routes/routes_constants.dart';
 import 'package:chat/services/usuarios_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -17,14 +18,6 @@ class _UsuariosPageState extends State<UsuariosPage> {
       RefreshController(initialRefresh: false);
 
   final usuarioService = new UsuariosService();
-
-  List<Usuario> usuarios = [];
-
-  @override
-  void initState() {
-    this._loadUsers();
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +59,9 @@ class _UsuariosPageState extends State<UsuariosPage> {
       body: SmartRefresher(
         controller: _refreshController,
         enablePullDown: true,
-        onRefresh: _loadUsers,
+        onRefresh: () {
+          _refreshController.loadComplete();
+        },
         header: WaterDropHeader(
           complete: Icon(Icons.check, color: Colors.blue[400]),
           waterDropColor: Colors.blue[400],
@@ -77,11 +72,12 @@ class _UsuariosPageState extends State<UsuariosPage> {
   }
 
   Widget _listViewUsers() {
+    final user = context.bloc<AuthenticationBloc>().state.user;
     return ListView.separated(
       physics: BouncingScrollPhysics(),
-      itemBuilder: (_, i) => _userListTile(usuarios[i]),
+      itemBuilder: (_, i) => _userListTile(user.friends[i]),
       separatorBuilder: (_, i) => Divider(),
-      itemCount: usuarios.length,
+      itemCount: user.friends.length,
     );
   }
 
@@ -102,15 +98,10 @@ class _UsuariosPageState extends State<UsuariosPage> {
         ),
       ),
       onTap: () {
-        // Provider.of<ChatService>(context, listen: false).usuarioTo = usuario;
-        Navigator.pushNamed(context, 'chat');
+        context.bloc<ChatBloc>().add(ChatGetAll(usuario));
+        Navigator.pushNamed(context, chatPage).then((value) =>
+            context.bloc<SocketBloc>().state.socket.off('mensaje-personal'));
       },
     );
-  }
-
-  void _loadUsers() async {
-    this.usuarios = await usuarioService.getUsuarios();
-    _refreshController.refreshCompleted();
-    setState(() {});
   }
 }
