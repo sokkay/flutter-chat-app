@@ -1,27 +1,20 @@
-import 'package:chat/services/auth_service.dart';
-import 'package:chat/services/chat_service.dart';
-import 'package:chat/services/socket_service.dart';
+import 'package:chat/blocs/providers.dart';
+import 'package:chat/routes/routes_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:chat/routes/routes.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-void main() => runApp(MyApp());
+void main() =>
+    runApp(MultiBlocProvider(providers: providers(), child: MyApp()));
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthService()),
-        ChangeNotifierProvider(create: (_) => SocketService()),
-        ChangeNotifierProvider(create: (_) => ChatService()),
-      ],
-      child: MaterialApp(
-        title: 'Chat App',
-        debugShowCheckedModeBanner: false,
-        initialRoute: 'loading',
-        routes: appRotes,
-      ),
+    return MaterialApp(
+      title: 'Chat App',
+      debugShowCheckedModeBanner: false,
+      onGenerateRoute: appRoutes,
+      initialRoute: loadingPage,
     );
   }
 }

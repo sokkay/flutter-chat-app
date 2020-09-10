@@ -1,10 +1,10 @@
+import 'package:chat/blocs/auth/authentication_bloc.dart';
+import 'package:chat/blocs/socket/socket_bloc.dart';
 import 'package:chat/models/usuario.dart';
-import 'package:chat/services/auth_service.dart';
 import 'package:chat/services/chat_service.dart';
-import 'package:chat/services/socket_service.dart';
 import 'package:chat/services/usuarios_service.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 
 class UsuariosPage extends StatefulWidget {
@@ -28,13 +28,11 @@ class _UsuariosPageState extends State<UsuariosPage> {
 
   @override
   Widget build(BuildContext context) {
-    final authService = Provider.of<AuthService>(context);
-    final socketService = Provider.of<SocketService>(context);
-
+    final user = context.bloc<AuthenticationBloc>().state.user;
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          authService.usuario.nombre,
+          user.name,
           style: TextStyle(color: Colors.black54),
         ),
         centerTitle: true,
@@ -43,17 +41,25 @@ class _UsuariosPageState extends State<UsuariosPage> {
         leading: IconButton(
           icon: Icon(Icons.exit_to_app, color: Colors.black54),
           onPressed: () {
-            AuthService.delteToken();
-            socketService.disconnect();
-            Navigator.pushReplacementNamed(context, 'login');
+            context
+                .bloc<AuthenticationBloc>()
+                .add(AuthenticationLogoutRequested());
           },
         ),
         actions: [
           Container(
             margin: EdgeInsets.only(right: 10),
-            child: socketService.serverStatus == ServerStatus.Online
-                ? Icon(Icons.check_circle, color: Colors.blue[400])
-                : Icon(Icons.offline_bolt, color: Colors.red[400]),
+            child: BlocBuilder<SocketBloc, SocketState>(
+              buildWhen: (previous, current) =>
+                  previous.serverStatus != current.serverStatus,
+              builder: (context, state) {
+                if (state.serverStatus == ServerStatus.Online) {
+                  return Icon(Icons.check_circle, color: Colors.blue[400]);
+                } else {
+                  return Icon(Icons.offline_bolt, color: Colors.red[400]);
+                }
+              },
+            ),
           )
         ],
       ),
@@ -81,10 +87,10 @@ class _UsuariosPageState extends State<UsuariosPage> {
 
   Widget _userListTile(Usuario usuario) {
     return ListTile(
-      title: Text(usuario.nombre),
+      title: Text(usuario.name),
       subtitle: Text(usuario.email),
       leading: CircleAvatar(
-        child: Text(usuario.nombre.substring(0, 2)),
+        child: Text(usuario.name.substring(0, 2)),
         backgroundColor: Colors.blue[100],
       ),
       trailing: Container(
@@ -95,8 +101,8 @@ class _UsuariosPageState extends State<UsuariosPage> {
           borderRadius: BorderRadius.circular(100),
         ),
       ),
-      onTap: (){
-        Provider.of<ChatService>(context, listen: false).usuarioTo = usuario;
+      onTap: () {
+        // Provider.of<ChatService>(context, listen: false).usuarioTo = usuario;
         Navigator.pushNamed(context, 'chat');
       },
     );

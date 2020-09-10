@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:chat/services/auth_service.dart';
 import 'package:chat/services/chat_service.dart';
 import 'package:chat/services/socket_service.dart';
@@ -30,7 +28,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     this.socketService = Provider.of<SocketService>(context, listen: false);
     this.authService = Provider.of<AuthService>(context, listen: false);
 
-    this.socketService.socket.on('mensaje-personal', _listenMessage);
+    // this.socketService.socket.on('mensaje-personal', _listenMessage);
     _loadHistory(this.chatService.usuarioTo.uid);
   }
 
@@ -46,7 +44,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
           children: [
             CircleAvatar(
               child: Text(
-                user.nombre.substring(0, 2),
+                user.name.substring(0, 2),
                 style: TextStyle(fontSize: 12),
               ),
               backgroundColor: Colors.blue[100],
@@ -54,7 +52,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
             ),
             SizedBox(height: 3),
             Text(
-              user.nombre,
+              user.name,
               style: TextStyle(color: Colors.black87, fontSize: 12),
             )
           ],
@@ -87,7 +85,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     _textCtrl.dispose();
     _focusNode.dispose();
     _messages.forEach((m) => m.animationController?.dispose());
-    this.socketService.socket.off('mensaje-personal');
+    // this.socketService.socket.off('mensaje-personal');
     super.dispose();
   }
 

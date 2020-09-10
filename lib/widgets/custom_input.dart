@@ -6,6 +6,7 @@ class CustomInput extends StatelessWidget {
   final TextEditingController textController;
   final TextInputType keyboardType;
   final bool isPassword;
+  final String errorText;
 
   const CustomInput({
     Key key,
@@ -14,6 +15,7 @@ class CustomInput extends StatelessWidget {
     @required this.textController,
     this.keyboardType = TextInputType.text,
     this.isPassword = false,
+    this.errorText,
   }) : super(key: key);
 
   @override
@@ -40,7 +42,7 @@ class CustomInput extends StatelessWidget {
         decoration: InputDecoration(
           prefixIcon: Icon(icon),
           border: InputBorder.none,
-          hintText: placeholder,
+          hintText: placeholder
         ),
       ),
     );

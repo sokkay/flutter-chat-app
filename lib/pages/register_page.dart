@@ -74,9 +74,7 @@ class _FormState extends State<_Form> {
             textController: passwordCtrl,
           ),
           ButtonBlue(
-            onPressed: authService.autenticando
-                ? null
-                : () => _handleRegister(authService),
+            onPressed: () => _handleRegister(authService),
             text: 'Ingrese',
           ),
         ],

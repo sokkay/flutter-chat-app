@@ -4,22 +4,24 @@ import 'dart:io';
 import 'package:chat/global/environment.dart';
 import 'package:chat/models/login_response.dart';
 import 'package:chat/models/usuario.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
-class AuthService with ChangeNotifier {
+class AuthService {
   Usuario _usuario;
-  bool _autenticando = false;
   final _storage = new FlutterSecureStorage();
+  static AuthService _instance;
 
-  bool get autenticando => this._autenticando;
-  Usuario get usuario => this._usuario;
-
-  set autenticando(bool valor) {
-    this._autenticando = valor;
-    notifyListeners();
+  factory AuthService() {
+    if (_instance == null) {
+      _instance = new AuthService._();
+    }
+    return _instance;
   }
+
+  AuthService._();
+  
+  Usuario get usuario => this._usuario;
 
   //Getters del token
   static Future<String> getToken() async {
@@ -34,7 +36,6 @@ class AuthService with ChangeNotifier {
   }
 
   Future<String> login(String email, String password) async {
-    this.autenticando = true;
     final data = {'email': email, 'password': password};
 
     try {
@@ -54,14 +55,11 @@ class AuthService with ChangeNotifier {
       }
     } catch (e) {
       print(e);
-    } finally {
-      this.autenticando = false;
     }
     return null;
   }
 
   Future<String> register(String name, String email, String password) async {
-    this.autenticando = true;
     final data = {'nombre': name, 'email': email, 'password': password};
     try {
       final resp = await http.post(
@@ -80,14 +78,15 @@ class AuthService with ChangeNotifier {
       }
     } catch (e) {
       print(e);
-    } finally {
-      this.autenticando = false;
     }
     return null;
   }
 
   Future<bool> isLoggedIn() async {
     final token = await this._storage.read(key: 'token');
+    if(this._usuario != null){
+      return true;
+    }
     try {
       final resp = await http.get(
         '${Environment.apiUrl}/login/renew',

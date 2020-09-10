@@ -1,21 +1,21 @@
+import 'dart:async';
+
 import 'package:chat/global/environment.dart';
 import 'package:chat/services/auth_service.dart';
-import 'package:flutter/material.dart';
 
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
-enum ServerStatus { Online, Offline, Connecting }
-
-class SocketService with ChangeNotifier {
-  ServerStatus _serverStatus = ServerStatus.Connecting;
+@Deprecated("Usar Bloc")
+class SocketService {
   IO.Socket _socket;
 
-  ServerStatus get serverStatus => this._serverStatus;
-
-  IO.Socket get socket => this._socket;
   Function get emit => this._socket.emit;
 
-  void connect() async {
+  StreamController _socketCtrl = new StreamController();
+
+  Stream get socketStream => _socketCtrl.stream;
+
+  Future<IO.Socket> connect() async {
     final token = await AuthService.getToken();
 
     // Dart client
@@ -26,18 +26,14 @@ class SocketService with ChangeNotifier {
       'extraHeaders': {'x-token': token}
     });
 
-    this._socket.on('connect', (_) {
-      this._serverStatus = ServerStatus.Online;
-      notifyListeners();
-    });
+    this._socket.on('connect', (_) => print('Conectado'));
 
-    this._socket.on('disconnect', (_) {
-      this._serverStatus = ServerStatus.Offline;
-      notifyListeners();
-    });
+    this._socket.on('disconnect', (_) => print('Desconectado'));
+    return this._socket;
   }
 
   void disconnect() {
     this._socket.disconnect();
+    this._socketCtrl.close();
   }
 }

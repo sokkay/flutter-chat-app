@@ -1,45 +1,27 @@
-import 'package:chat/pages/login_page.dart';
-import 'package:chat/pages/usuarios_page.dart';
-import 'package:chat/services/auth_service.dart';
-import 'package:chat/services/socket_service.dart';
+import 'package:chat/blocs/auth/authentication_bloc.dart';
+import 'package:chat/blocs/socket/socket_bloc.dart';
+import 'package:chat/routes/routes_constants.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class LoadingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FutureBuilder(
-        future: checkLoginState(context),
-        builder: (context, snapshot) {
-          return Center(
-            child: Text('Espere...'),
-          );
+      body: BlocListener<AuthenticationBloc, AuthenticationState>(
+        listener: (context, state) {
+          if (state.status == AuthenticationStatus.authenticated) {
+            context.bloc<SocketBloc>().add(SocketConnect());
+            Navigator.pushReplacementNamed(context, usuariosPage);
+          } else if (state.status == AuthenticationStatus.unauthenticated) {
+            context.bloc<SocketBloc>().add(SocketDisconnect());
+            Navigator.pushReplacementNamed(context, loginPage);
+          }
         },
+        child: Center(
+          child: Text('Espere...'),
+        ),
       ),
     );
-  }
-
-  Future checkLoginState(BuildContext context) async {
-    final authService = Provider.of<AuthService>(context, listen: false);
-    final autenticado = await authService.isLoggedIn();
-    if (autenticado) {
-      Provider.of<SocketService>(context, listen: false).connect();
-      Navigator.pushReplacement(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => UsuariosPage(),
-          transitionDuration: Duration(milliseconds: 0)
-        ),
-      );
-    } else {
-      Navigator.pushReplacement(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => LoginPage(),
-          transitionDuration: Duration(milliseconds: 0)
-        ),
-      );
-    }
   }
 }
