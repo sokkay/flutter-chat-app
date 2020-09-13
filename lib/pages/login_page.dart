@@ -14,26 +14,29 @@ import 'package:formz/formz.dart';
 class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color(0xffF2F2F2),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: BouncingScrollPhysics(),
-          child: Container(
-            height: MediaQuery.of(context).size.height * 0.9,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Logo(
-                  title: 'Messenger',
-                ),
-                _Form(),
-                Labels(
-                  route: 'register',
-                  askTitle: '¿No tienes cuenta?',
-                  title: 'Crea una ahora!',
-                ),
-              ],
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: Scaffold(
+        backgroundColor: Color(0xffF2F2F2),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            physics: BouncingScrollPhysics(),
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.9,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Logo(
+                    title: 'Messenger',
+                  ),
+                  _Form(),
+                  Labels(
+                    route: 'register',
+                    askTitle: '¿No tienes cuenta?',
+                    title: 'Crea una ahora!',
+                  ),
+                ],
+              ),
             ),
           ),
         ),

@@ -26,6 +26,9 @@ class AuthenticationBloc
     if (event is AuthenticationLogoutRequested) {
       yield* mapLogoutTotState();
     }
+    if (event is AuthenticationUserChanged) {
+      yield* mapUserChanged();
+    }
   }
 
   Stream<AuthenticationState> mapLoginToState(
@@ -52,7 +55,11 @@ class AuthenticationBloc
       await authService.logout();
       add(AuthenticationStatusChanged(AuthenticationStatus.unauthenticated));
     } catch (e) {
-      add(AuthenticationStatusChanged(AuthenticationStatus.unknown));
+      add(AuthenticationStatusChanged(AuthenticationStatus.unauthenticated));
     }
+  }
+
+  Stream<AuthenticationState> mapUserChanged() async* {
+    yield state.copyWith(user: authService.usuario);
   }
 }

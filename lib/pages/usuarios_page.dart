@@ -1,12 +1,10 @@
-import 'package:chat/blocs/auth/authentication_bloc.dart';
-import 'package:chat/blocs/chat/chat_bloc.dart';
-import 'package:chat/blocs/socket/socket_bloc.dart';
-import 'package:chat/models/usuario.dart';
-import 'package:chat/routes/routes_constants.dart';
-import 'package:chat/services/usuarios_service.dart';
+import 'package:animations/animations.dart';
+import 'package:chat/widgets/custom_bottom_navbar.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pull_to_refresh/pull_to_refresh.dart';
+
+import 'package:chat/pages/main_page/chats_page.dart';
+import 'package:chat/pages/discover_page.dart';
+import 'package:chat/pages/settings_page.dart';
 
 class UsuariosPage extends StatefulWidget {
   @override
@@ -14,94 +12,57 @@ class UsuariosPage extends StatefulWidget {
 }
 
 class _UsuariosPageState extends State<UsuariosPage> {
-  final RefreshController _refreshController =
-      RefreshController(initialRefresh: false);
+  int _currentPage = 1;
 
-  final usuarioService = new UsuariosService();
+  List<Widget> _pages = [DiscoverPage(), ChatsPage(), SettingsPage()];
 
   @override
   Widget build(BuildContext context) {
-    final user = context.bloc<AuthenticationBloc>().state.user;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          user.name,
-          style: TextStyle(color: Colors.black54),
-        ),
-        centerTitle: true,
-        elevation: 1,
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: Scaffold(
         backgroundColor: Colors.white,
-        leading: IconButton(
-          icon: Icon(Icons.exit_to_app, color: Colors.black54),
-          onPressed: () {
-            context
-                .bloc<AuthenticationBloc>()
-                .add(AuthenticationLogoutRequested());
+        body: PageTransitionSwitcher(
+          transitionBuilder: (child, primaryAnimation, secondaryAnimation) {
+            return FadeThroughTransition(
+              child: child,
+              animation: primaryAnimation,
+              secondaryAnimation: secondaryAnimation,
+            );
           },
+          child: _pages[_currentPage],
         ),
-        actions: [
-          Container(
-            margin: EdgeInsets.only(right: 10),
-            child: BlocBuilder<SocketBloc, SocketState>(
-              buildWhen: (previous, current) =>
-                  previous.serverStatus != current.serverStatus,
-              builder: (context, state) {
-                if (state.serverStatus == ServerStatus.Online) {
-                  return Icon(Icons.check_circle, color: Colors.blue[400]);
-                } else {
-                  return Icon(Icons.offline_bolt, color: Colors.red[400]);
-                }
-              },
+        bottomNavigationBar: CustomBottomNavBar(
+          currentIndex: _currentPage,
+          onTap: _handleBottomTap,
+          items: [
+            CustomBottomNavBarItem(
+              icon: Icons.navigation,
+              title: 'Descubrir',
+              selectedColor: Colors.blue[300],
+              boxColor: Colors.blue[50],
             ),
-          )
-        ],
-      ),
-      body: SmartRefresher(
-        controller: _refreshController,
-        enablePullDown: true,
-        onRefresh: () {
-          _refreshController.loadComplete();
-        },
-        header: WaterDropHeader(
-          complete: Icon(Icons.check, color: Colors.blue[400]),
-          waterDropColor: Colors.blue[400],
+            CustomBottomNavBarItem(
+              icon: Icons.chat,
+              title: 'Chats',
+              selectedColor: Colors.pink[200],
+              boxColor: Colors.pink[50],
+            ),
+            CustomBottomNavBarItem(
+              icon: Icons.settings,
+              title: 'Opciones',
+              selectedColor: Colors.blueGrey[300],
+              boxColor: Colors.blueGrey[50],
+            ),
+          ],
         ),
-        child: _listViewUsers(),
       ),
     );
   }
 
-  Widget _listViewUsers() {
-    final user = context.bloc<AuthenticationBloc>().state.user;
-    return ListView.separated(
-      physics: BouncingScrollPhysics(),
-      itemBuilder: (_, i) => _userListTile(user.friends[i]),
-      separatorBuilder: (_, i) => Divider(),
-      itemCount: user.friends.length,
-    );
-  }
-
-  Widget _userListTile(Usuario usuario) {
-    return ListTile(
-      title: Text(usuario.name),
-      subtitle: Text(usuario.email),
-      leading: CircleAvatar(
-        child: Text(usuario.name.substring(0, 2)),
-        backgroundColor: Colors.blue[100],
-      ),
-      trailing: Container(
-        width: 10,
-        height: 10,
-        decoration: BoxDecoration(
-          color: usuario.online ? Colors.green[300] : Colors.red[400],
-          borderRadius: BorderRadius.circular(100),
-        ),
-      ),
-      onTap: () {
-        context.bloc<ChatBloc>().add(ChatGetAll(usuario));
-        Navigator.pushNamed(context, chatPage).then((value) =>
-            context.bloc<SocketBloc>().state.socket.off('mensaje-personal'));
-      },
-    );
+  void _handleBottomTap(int index) {
+    setState(() {
+      _currentPage = index;
+    });
   }
 }

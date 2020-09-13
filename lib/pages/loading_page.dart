@@ -9,13 +9,16 @@ class LoadingPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: BlocListener<AuthenticationBloc, AuthenticationState>(
+        listenWhen: (previous, current) => previous.status != current.status,
         listener: (context, state) {
           if (state.status == AuthenticationStatus.authenticated) {
             context.bloc<SocketBloc>().add(SocketConnect());
-            Navigator.pushReplacementNamed(context, usuariosPage);
+            Navigator.pushNamedAndRemoveUntil(
+                context, usuariosPage, ModalRoute.withName(loadingPage));
           } else if (state.status == AuthenticationStatus.unauthenticated) {
             context.bloc<SocketBloc>().add(SocketDisconnect());
-            Navigator.pushReplacementNamed(context, loginPage);
+            Navigator.pushNamedAndRemoveUntil(
+                context, loginPage, ModalRoute.withName(loadingPage));
           }
         },
         child: Center(

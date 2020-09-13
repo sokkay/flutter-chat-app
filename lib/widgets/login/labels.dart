@@ -39,14 +39,14 @@ class Labels extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(height: 40),
+          SizedBox(height: MediaQuery.of(context).size.height * 0.02),
           Text(
             'Términos y condiciones de uso',
             style: TextStyle(
               fontWeight: FontWeight.w200,
             ),
           ),
-          SizedBox(height: 10),
+          SizedBox(height: 15),
         ],
       ),
     );

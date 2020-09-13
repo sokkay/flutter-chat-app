@@ -1,6 +1,7 @@
 import 'package:chat/pages/chat_page.dart';
 import 'package:chat/pages/loading_page.dart';
 import 'package:chat/pages/login_page.dart';
+import 'package:chat/pages/profile_page.dart';
 import 'package:chat/pages/register_page.dart';
 import 'package:chat/routes/routes_constants.dart';
 import 'package:flutter/material.dart';
@@ -39,6 +40,11 @@ Route<dynamic> appRoutes(RouteSettings settings) {
     case loadingPage:
       return MaterialPageRoute(
         builder: (BuildContext context) => LoadingPage(),
+        settings: RouteSettings(name: settings.name),
+      );
+    case profilePage:
+      return MaterialPageRoute(
+        builder: (BuildContext context) => ProfilePage(),
         settings: RouteSettings(name: settings.name),
       );
     default:

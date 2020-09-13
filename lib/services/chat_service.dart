@@ -6,6 +6,17 @@ import 'package:http/http.dart' as http;
 
 class ChatService {
 
+  static ChatService _instance;
+
+  factory ChatService(){
+    if(_instance == null){
+      _instance = new ChatService._();
+    }
+    return _instance;
+  }
+
+  ChatService._();
+
   Future<List<Message>> getChat(String userID) async {
     try {
       final resp = await http.get(
@@ -16,6 +27,7 @@ class ChatService {
       return messagesResponse.messages;
     } catch (e) {
       print(e);
+      return null;
     }
   }
 }
